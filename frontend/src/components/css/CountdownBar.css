@@ -1,0 +1,27 @@
+.countdown-bar {
+    width: 100%;
+    background-color: #595959;
+    margin: 5px 0;
+    border-radius: 10px;
+    position: relative;
+    height: 20px;
+    overflow: hidden;
+}
+  
+.countdown-fill {
+    background-color: #00aaff;
+    height: 100%;
+    transition: width 1s ease;
+}
+  
+.countdown-label {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 17.5px;
+    color: #1f1f1f;
+}
+  

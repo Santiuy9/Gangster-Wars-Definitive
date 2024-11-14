@@ -1,0 +1,106 @@
+.mission-card {
+    background-color: #383838bb;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+}
+  
+.mission-title {
+    font-size: 24px;
+    color: #9a9a9a;
+    margin-bottom: 10px;
+}
+  
+.mission-description {
+    font-size: 16px;
+    color: #757575;
+    margin-bottom: 20px;
+}
+  
+.mission-rewards {
+    margin-bottom: 20px;
+}
+  
+.rewards-title {
+    font-weight: bold;
+}
+  
+.reward-money, .reward-xp {
+    display: block;
+    margin: 5px 0;
+}
+  
+.mission-difficulty {
+    margin-bottom: 20px;
+}
+  
+.difficulty-title {
+    font-weight: bold;
+}
+  
+.difficulty-bar {
+    background-color: #ddd;
+    height: 20px;
+    overflow: hidden;
+    margin: 5px 0;
+}
+  
+.current-difficulty {
+    background-color: #4caf50;
+    height: 100%;
+}
+  
+.difficulty-percentage {
+    font-size: 14px;
+    color: #333;
+}
+  
+.start-mission-btn {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    margin: 5px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 18px;
+}
+  
+.start-mission-btn:hover {
+    background-color: #45a049;
+}
+  
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.popup-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.popup-content h2 {
+    margin-bottom: 10px;
+}
+
+.popup-content button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}

@@ -1,0 +1,28 @@
+.progress-bar-container {
+    width: 100%;
+    max-width: 300px;
+    margin: 10px 0;
+}
+
+.progress-bar-name {
+    position: relative;
+    line-height: 20px;
+    font-size: 12px;
+    font-weight: bolder;
+    z-index: 2;
+}
+
+.progress-bar-outer {
+    width: 100%;
+    height: 20px;
+    background-color: gray;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar-inner {
+    position: relative;
+    top: -20px;
+    height: 100%;
+    transition: width 0.5s ease-out;
+}

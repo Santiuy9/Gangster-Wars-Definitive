@@ -1,0 +1,62 @@
+.ItemCard {
+    width: 200px;
+    margin-top: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background-color: rgba(35, 35, 35, 0.7);
+    color: gray;
+    padding: 10px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.ItemCard:hover {
+    color: rgb(31, 31, 31);
+    background-color: rgba(235, 170, 35, 0.75);
+}
+
+.ItemCard img {
+    position: relative;
+    top: -75px;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.ItemCard:hover img{
+    transform: scale(120%);
+    z-index: 1;
+}
+
+.ItemDescription {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    position: relative;
+    top: -70px;
+    transition: all 0.3s ease;
+}
+
+.ItemCard:hover .ItemDescription {
+    transform: translateY(15px);
+
+}
+
+.fa-solid {
+    position: absolute;
+    top: -10px;
+    opacity: 0;
+    font-size: 200px;
+    transition: all 0.3s ease;
+}
+
+.ItemCard:hover .fa-solid {
+    position: absolute;
+    color: rgb(0, 0, 0);
+    opacity: 0.1;
+    z-index: -1;
+}

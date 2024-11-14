@@ -1,0 +1,27 @@
+.difficulty-bar {
+    width: 100%;
+    background-color: #595959;
+    margin: 5px;
+    border-radius: 10px;
+    position: relative;
+    height: 20px;
+    overflow: hidden;
+}
+  
+.difficulty-fill {
+    background-color: #f39c12;
+    height: 100%;
+    transition: width 0.3s ease;
+}
+  
+.difficulty-label {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 17.5px;
+    color: #1f1f1f;
+}
+  

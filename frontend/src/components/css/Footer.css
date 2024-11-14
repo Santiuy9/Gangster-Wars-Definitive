@@ -1,0 +1,20 @@
+.Footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    bottom: 0;
+    width: 100vw;
+    height: 50px;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 3;
+}
+
+.lista {
+    list-style: none;
+    display: flex;
+}
+
+.lista li {
+    margin: 0;
+}

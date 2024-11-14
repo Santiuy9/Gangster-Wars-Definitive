@@ -1,0 +1,63 @@
+.game-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0;
+    width: 100vw;
+    background-color: #00000070;
+    color: white;
+    padding: 10px 20px;
+    z-index: 1;
+}
+
+.player-stat {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 20px;
+}
+
+.stat-label {
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.stat-bar {
+    width: 100px;
+    height: 20px;
+    background-color: #555;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-right: 10px;
+}
+
+.stat-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.health-fill {
+    background-color: #4caf50;
+}
+
+.energy-fill {
+    background-color: #3300ff;
+}
+
+.stat-value {
+    min-width: 40px;
+    text-align: right;
+}
+
+.guest-header {
+    text-align: center;
+}
+
+.guest-header h1 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+}
+
+.guest-header p {
+    font-size: 1em;
+}

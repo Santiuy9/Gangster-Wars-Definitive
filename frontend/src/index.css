@@ -1,0 +1,22 @@
+* {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.Background {
+  position: fixed;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+}
+
+a {
+  text-decoration: none;
+  color: rebeccapurple;
+}
+
+a:hover {
+  color: rgb(235, 170, 35);
+}
