@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import './css/login.css';
 
-export default function Login() {
+export default function Login({onLogin}) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -28,16 +28,15 @@ export default function Login() {
 
             // Comprobar si el inicio de sesión fue exitoso
             if (response.status === 200) {
-                console.log('Inicio de sesión exitoso');
+                console.log('Inicio de sesión exitoso:', response.data);
 
-                // Guardar el token en localStorage para futuras solicitudes
-                localStorage.setItem('token', response.data.token);
-
-                // Redirigir al usuario a la página principal o dashboard
-                navigate('/');
+                const token = response.data.token;
+                onLogin(token); // Llama a onLogin con el token para actualizar el estado en App
+                navigate('/'); // Redirige al inicio o dashboard
             } else {
                 setError('Error al iniciar sesión');
             }
+            
         } catch (error) {
             // Manejar errores de autenticación y otros errores del servidor
             setError(error.response?.data?.message || 'Error al iniciar sesión');

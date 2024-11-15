@@ -1,12 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { db, auth } from "../firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import React, { useState, useEffect } from "react";
+import axios from 'axios';  // Asegúrate de importar axios
 import Button from './Button';
 import HoverBar from "./HoverBar";
 import './css/Personaje.css';
 
-export default function Personaje() {
+export default function Personaje({ isAuthenticated, playerInfo }) {
     const [character, setCharacter] = useState({
         Armamento: null,
         Equipamiento: null,
@@ -14,7 +12,6 @@ export default function Personaje() {
     });
     const [inventory, setInventory] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [user, setUser] = useState(null);
     const [stats, setStats] = useState({
         Ataque: 0,
         Defensa: 0,
@@ -22,30 +19,17 @@ export default function Personaje() {
     });
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            if (currentUser) {
-                setUser(currentUser);
-                fetchPlayerData(currentUser.uid);
-            } else {
-                console.log("No user is authenticated");
-                setIsLoading(false);
-            }
-        });
-
-        return () => unsubscribe();
-    }, []);
-
-    const fetchPlayerData = async (userId) => {
-        const playerRef = doc(db, 'Players', userId);
-        const playerDoc = await getDoc(playerRef);
-        if (playerDoc.exists()) {
-            const playerData = playerDoc.data();
-            setCharacter(playerData.Character || {});
-            setInventory(playerData.Inventory || []);
-            calculateStats(playerData.Character || {});
+        if (isAuthenticated) {
+            setCharacter(playerInfo.Character || {});
+            setInventory(playerInfo.inventory || []);
+            calculateStats(playerInfo.Character || {});
+            setIsLoading(false);
+        } else {
+            console.log("No user is authenticated");
+            setIsLoading(false);
         }
-        setIsLoading(false);
-    };
+        console.log(playerInfo.inventory)
+    }, [isAuthenticated, playerInfo]);
 
     const calculateStats = (characterData) => {
         const newStats = { Ataque: 0, Defensa: 0, Velocidad: 0 };
@@ -65,32 +49,46 @@ export default function Personaje() {
     };
 
     const handleEquipItem = async (item, category) => {
-        if (user) {
-            const newCharacter = { ...character, [category]: item };
-            setCharacter(newCharacter);
-
-            const playerRef = doc(db, 'Players', user.uid);
-            await updateDoc(playerRef, {
-                Character: newCharacter
-            });
-
-            calculateStats(newCharacter);
+        if (isAuthenticated) {
+            const itemId = item._id; // Ahora el item tiene un _id
+            const playerId = playerInfo._id; // El ID del jugador
+    
+            try {
+                const response = await axios.post('/api/equip-item', {
+                    playerId,
+                    itemId,
+                    category
+                });
+    
+                console.log('Ítem equipado:', response.data);
+                // Actualiza el estado o realiza alguna acción en el frontend
+            } catch (error) {
+                console.error('Error al equipar el ítem:', error);
+            }
         } else {
             console.log("No user is authenticated");
         }
     };
+    
+    
 
     const unequipItem = async (category) => {
-        if (user) {
+        if (isAuthenticated) {
             const newCharacter = { ...character, [category]: null };
             setCharacter(newCharacter);
-
-            const playerRef = doc(db, 'Players', user.uid);
-            await updateDoc(playerRef, {
-                Character: newCharacter
-            });
-
             calculateStats(newCharacter);
+
+            try {
+                // Realizar la petición al backend para desequipar el ítem
+                const response = await axios.post('/api/unequip-item', {
+                    userId: playerInfo._id,
+                    category: category
+                });
+
+                console.log('Item unequipped:', response.data);
+            } catch (error) {
+                console.error('Error al desequipar el ítem:', error);
+            }
         } else {
             console.log("No user is authenticated");
         }

@@ -1,6 +1,5 @@
 import React from "react";
-import { db, auth } from "../firebase";
-import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import axios from "axios"
 import SlideButton from "./SlideButon";
 import ProgressBar from "./ProgressBar";
 import './css/ItemCard.css'
@@ -30,45 +29,54 @@ export default function ItemCard({
     }
 
     const handlePurchase = async (item, price) => {
-        const userId = auth.currentUser?.uid;
-        if (!userId) {
-            alert('No estás autenticado.');
+        const token = localStorage.getItem("token");
+        if(!token) {
+            alert("No estas autenticado");
             return;
         }
-
-        const playerRef = doc(db, 'Players', userId);
-
         try {
-            const playerDoc = await getDoc(playerRef);
-            if (playerDoc.exists()) {
-                const playerData = playerDoc.data();
-                const playerMoney = playerData.dinero;
-
-                if (playerMoney >= price) {
-                    await updateDoc(playerRef, {
-                        dinero: playerMoney - price,
-                        Inventory: arrayUnion(item)
-                    });
-                    alert('Compra realizada con éxito!');
-                } else {
-                    alert('No tienes suficiente dinero para comprar este ítem.');
+            const response = await axios.get("http://localhost:5000/api/users/me", {
+                headers: {
+                    Authorization: `Bearer ${token}`
                 }
-            } else {
-                console.error('No se encontró el jugador.');
+            });
+            const playerData = response.data;
+            const playerMoney = playerData.dinero;
+
+            if (playerMoney >= price) {
+                await axios.put(
+                    `http://localhost:5000/api/users/${playerData._id}`,
+                    {
+                        dinero: playerMoney - price,
+                        newItem: item
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+                alert("Compra realizada con exito!")
+            }
+            else {
+                alert("No tienes suficiente dinero para realizar la compra")
             }
         } catch (error) {
-            console.error('Error al realizar la compra: ', error);
+            console.error("Error al realizar la compra: ", error)
         }
-    };
+    }
 
     const handleBuyClick = () => {
         const item = { 
-            title, 
-            description, 
             imageSrc,
+            title,
+            description,
+            price,
             category,
             proBarName,
-            proBarPercentage,
+            proBarTxtColor,
+            proBarBgColor,
+            damage: proBarPercentage 
         };
         handlePurchase(item, parseInt(price));
     }

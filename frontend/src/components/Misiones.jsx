@@ -193,27 +193,30 @@ export default function Misiones() {
     }
 
     return (
-        <div className="PrincipalContainer Misiones">
-            <h1>Misiones</h1>
+        <>
+            <h1>Holis</h1>
+        </>
+        // <div className="PrincipalContainer Misiones">
+        //     <h1>Misiones</h1>
 
-            {missions.map((mission) => (
-                <div key={mission.id} className="mission-card">
-                    <img src={mission.imageSrc} alt={mission.title} />
-                    <h2>{mission.title}</h2>
-                    <p>{mission.description}</p>
-                    <p>Recompensa: ${mission.moneyReward[0]} - ${mission.moneyReward[1]}</p>
-                    <p>XP: {mission.xpReward[0]} - {mission.xpReward[1]}</p>
-                    <p>Coste de Energía: {mission.costEnergy}</p>
+        //     {missions.map((mission) => (
+        //         <div key={mission.id} className="mission-card">
+        //             <img src={mission.imageSrc} alt={mission.title} />
+        //             <h2>{mission.title}</h2>
+        //             <p>{mission.description}</p>
+        //             <p>Recompensa: ${mission.moneyReward[0]} - ${mission.moneyReward[1]}</p>
+        //             <p>XP: {mission.xpReward[0]} - {mission.xpReward[1]}</p>
+        //             <p>Coste de Energía: {mission.costEnergy}</p>
 
-                    {missionTimers[mission.id] > 0 ? (
-                        <p>Tiempo restante: {Math.floor(missionTimers[mission.id] / 1000)} segundos</p>
-                    ) : (
-                        <button onClick={() => handleStartMission(mission)} disabled={isMissionActive}>
-                            Iniciar Misión
-                        </button>
-                    )}
-                </div>
-            ))}
-        </div>
+        //             {missionTimers[mission.id] > 0 ? (
+        //                 <p>Tiempo restante: {Math.floor(missionTimers[mission.id] / 1000)} segundos</p>
+        //             ) : (
+        //                 <button onClick={() => handleStartMission(mission)} disabled={isMissionActive}>
+        //                     Iniciar Misión
+        //                 </button>
+        //             )}
+        //         </div>
+        //     ))}
+        // </div>
     );
 }

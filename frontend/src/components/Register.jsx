@@ -39,7 +39,8 @@ export default function Register() {
             } else {
                 setError('Error en la autenticación')
             }
-        } catch (error) {
+        } 
+        catch (error) {
             setError(error.response?.data?.message || 'Error al crear el usuario')
             console.error('Error al crear el usuario:', error)
         }
