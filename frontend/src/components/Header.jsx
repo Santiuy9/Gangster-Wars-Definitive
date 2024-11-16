@@ -1,23 +1,26 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { UserContext } from "../UserContext";
+import HoverBar from "./HoverBar";
 
-import HoverBar from './HoverBar'
+import "./css/Header.css";
 
-import './css/Header.css';
+export default function Header() {
+    const { userInfo, setUserInfo } = useContext(UserContext); // Obtiene datos del contexto
+    const navigate = useNavigate();
 
-export default function Header({ isAuthenticated, userInfo, onLogout }) {
-    const navigate = useNavigate()
-
-    console.log(isAuthenticated)
-    console.log(userInfo)
-
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        setUserInfo(null); // Limpia el estado global
+        navigate("/"); // Redirige al usuario
+    };
 
     return (
         <header className="game-header">
-            {isAuthenticated ? (
+            {userInfo ? (
                 <>
-                    <HoverBar name={`Vida ${userInfo.vida}`} hoverText={`0s`} percentage={100} color='#4caf50' />
-                    <HoverBar name={`Energia ${userInfo.energia}`} hoverText={`0s`} percentage={100} color='#3300ff' />
+                    <HoverBar name={`Vida ${userInfo.vida}`} hoverText={`0s`} percentage={100} color="#4caf50" />
+                    <HoverBar name={`Energía ${userInfo.energia}`} hoverText={`0s`} percentage={100} color="#3300ff" />
 
                     <div className="player-stat">
                         <span className="stat-label">Dinero:</span>
@@ -27,13 +30,15 @@ export default function Header({ isAuthenticated, userInfo, onLogout }) {
                         <span className="stat-label">Moneda Premium:</span>
                         <span className="stat-value">{userInfo.monedaPremium}</span>
                     </div>
-                    <button onClick={onLogout} className="logout-btn">
+                    <button onClick={handleLogout} className="logout-btn">
                         Cerrar Sesión
                     </button>
                 </>
             ) : (
                 <div className="guest-header">
-                    <h1>Bienvenido a <Link to="/">Gangster Wars</Link></h1>
+                    <h1>
+                        Bienvenido a <Link to="/">Gangster Wars</Link>
+                    </h1>
                     <p>
                         <Link to="/login">Inicia Sesión</Link> o <Link to="/register">Regístrate</Link> para comenzar
                     </p>
@@ -42,6 +47,8 @@ export default function Header({ isAuthenticated, userInfo, onLogout }) {
         </header>
     );
 }
+
+
 
 
 // import React, { useEffect, useState } from 'react';

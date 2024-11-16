@@ -1,19 +1,21 @@
-// App.jsx
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useContext } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { UserProvider, UserContext } from './UserContext';
 import Header from './components/Header';
+import Footer from './components/Footer';
 import Home from './components/Home';
 import Login from './components/Login';
 import Register from './components/Register';
-import Misiones from './components/Misiones'
-import Tienda from './components/Tienda'
-import Personaje from './components/Personaje'
+import Misiones from './components/Misiones';
+import Tienda from './components/Tienda';
+import Personaje from './components/Personaje';
 import './App.css';
 
-export default function App() {
+function AppContent() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [userInfo, setUserInfo] = useState(null);
+    const { setUserInfo } = useContext(UserContext); // Esto ya funciona porque UserProvider envuelve AppContent
 
+    // Función para obtener los datos del usuario
     const fetchUserData = async (token) => {
         try {
             const response = await fetch("http://localhost:5000/api/user", {
@@ -22,71 +24,66 @@ export default function App() {
                     "Authorization": `Bearer ${token}`,
                 }
             });
-            
+
             if (!response.ok) throw new Error("Error en la solicitud: " + response.status);
-            
+
             const data = await response.json();
-            console.log("User data fetched:", data);
             setUserInfo(data);
             setIsAuthenticated(true);
         } catch (error) {
             console.error("Error al obtener los datos del usuario", error);
-            setIsAuthenticated(false); // Resetear autenticación si falla
+            setIsAuthenticated(false);
         }
     };
 
+    // Efecto para cargar el token al iniciar la aplicación
     useEffect(() => {
-        // Revisar el token en localStorage al cargar el componente
         const token = localStorage.getItem('token');
-        console.log("Token en localStorage:", token);
-        if (token) {
-            fetchUserData(token);
-        } else {
-            console.log("No hay token en localStorage");
-        }
-    }, []); // Solo al montar el componente
+        if (token) fetchUserData(token);
+    }, []);
 
+    // Efecto para escuchar cambios en localStorage
     useEffect(() => {
         const handleStorageChange = () => {
             const token = localStorage.getItem('token');
-            if (token) {
-                fetchUserData(token);
-            }
+            if (token) fetchUserData(token);
             else {
                 setIsAuthenticated(false);
                 setUserInfo(null);
             }
-        }
-        window.addEventListener('storage', handleStorageChange);
+        };
 
-        return () => window.removeEventListener('storage', handleStorageChange)
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
 
+    // Función de logout
     const handleLogout = () => {
-        localStorage.removeItem('token'); // Eliminar el token
-        setIsAuthenticated(false); // Limpiar el estado de autenticación
-        setUserInfo(null); // Limpiar la información del usuario
+        localStorage.removeItem('token');
+        setIsAuthenticated(false);
+        setUserInfo(null);
     };
 
+    console.log(isAuthenticated)
     return (
         <Router>
             <Header 
                 isAuthenticated={isAuthenticated} 
-                userInfo={userInfo} 
-                onLogout={handleLogout}  // Pasa la función de logout
+                onLogout={handleLogout} 
             />
+            {isAuthenticated && <Footer />}
             <Routes>
                 <Route 
                     path="/" 
-                    element={<Home isAuthenticated={isAuthenticated} userInfo={userInfo} />} 
+                    element={<Home isAuthenticated={isAuthenticated} />} 
                 />
                 <Route 
                     path="/login" 
                     element={
                         <Login 
                             onLogin={(token) => {
-                                localStorage.setItem('token', token); // Guarda el token
-                                fetchUserData(token); // Actualiza la información del usuario
+                                localStorage.setItem('token', token);
+                                fetchUserData(token);
                             }}
                         />
                     } 
@@ -94,11 +91,25 @@ export default function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/misiones" element={<Misiones />} />
                 <Route path="/tienda" element={<Tienda />} />
-                <Route path="/personaje" element={<Personaje />} />
+                <Route 
+                    path="/personaje" 
+                    element={<Personaje isAuthenticated={isAuthenticated} />} 
+                />
             </Routes>
         </Router>
     );
 }
+
+export default function App() {
+    return (
+        <UserProvider>
+            <AppContent />
+        </UserProvider>
+    );
+}
+
+
+
 
 
 

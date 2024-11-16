@@ -1,15 +1,17 @@
 // Home.jsx
-import React from 'react';
+import React  from 'react';
+import { useContext } from "react";
+import { UserContext } from "../UserContext";
 import Button from './Button'
 
 import './css/home.css';
 
 
-export default function Home({ isAuthenticated, userInfo }) {
-    console.log(userInfo)
+export default function Home() {
+    const { userInfo } = useContext(UserContext);
     return (
         <main className='PrincipalContainer'>
-            {isAuthenticated ? (
+            {userInfo ? (
                 <div className='Home'>
                     <h1>¡Bienvenido de vuelta, {userInfo.username}</h1>
                     <p>Nos preguntamos... Que crimenes realizaremos hoy jefe?</p>

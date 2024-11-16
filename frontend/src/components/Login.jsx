@@ -1,46 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { UserContext } from "../UserContext";
 import './css/login.css';
 
-export default function Login({onLogin}) {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+export default function Login() {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const { fetchUserData } = useContext(UserContext); // Ahora usa el contexto para obtener la función
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
+        setError("");
 
         // Validar que los campos no estén vacíos
         if (!email || !password) {
-            setError('Por favor, completa todos los campos.');
+            setError("Por favor, completa todos los campos.");
             return;
         }
 
         try {
             // Enviar los datos al backend para iniciar sesión
-            const response = await axios.post('http://localhost:5000/api/login', {
+            const response = await axios.post("http://localhost:5000/api/login", {
                 email,
                 password,
             });
 
-            // Comprobar si el inicio de sesión fue exitoso
             if (response.status === 200) {
-                console.log('Inicio de sesión exitoso:', response.data);
+                console.log("Inicio de sesión exitoso:", response.data);
 
                 const token = response.data.token;
-                onLogin(token); // Llama a onLogin con el token para actualizar el estado en App
-                navigate('/'); // Redirige al inicio o dashboard
+                localStorage.setItem("token", token); // Guarda el token en localStorage
+                await fetchUserData(token); // Llama a fetchUserData para actualizar el estado global
+                navigate("/"); // Redirige al inicio o dashboard
             } else {
-                setError('Error al iniciar sesión');
+                setError("Error al iniciar sesión.");
             }
-            
         } catch (error) {
             // Manejar errores de autenticación y otros errores del servidor
-            setError(error.response?.data?.message || 'Error al iniciar sesión');
-            console.error('Error al iniciar sesión:', error);
+            setError(error.response?.data?.message || "Error al iniciar sesión.");
+            console.error("Error al iniciar sesión:", error);
         }
     };
 

@@ -1,41 +1,46 @@
-import React, { useState, useEffect } from "react";
-import axios from 'axios';  // Asegúrate de importar axios
-import Button from './Button';
-import HoverBar from "./HoverBar";
-import './css/Personaje.css';
+import React, { useState, useEffect, useContext } from "react";
+import axios from "axios"; // Asegúrate de importar axios
+import { UserContext } from "../UserContext";
 
-export default function Personaje({ isAuthenticated, playerInfo }) {
+import Button from "./Button";
+import HoverBar from "./HoverBar";
+import "./css/Personaje.css";
+
+export default function Personaje() {
+    const { userInfo, setUserInfo } = useContext(UserContext);
+
     const [character, setCharacter] = useState({
         Armamento: null,
         Equipamiento: null,
-        Vehículo: null
+        Vehículo: null,
     });
     const [inventory, setInventory] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [stats, setStats] = useState({
         Ataque: 0,
         Defensa: 0,
-        Velocidad: 0
+        Velocidad: 0,
     });
 
     useEffect(() => {
-        if (isAuthenticated) {
-            setCharacter(playerInfo.Character || {});
-            setInventory(playerInfo.inventory || []);
-            calculateStats(playerInfo.Character || {});
+        if (userInfo) {
+            setCharacter(userInfo.Character || {});
+            setInventory(userInfo.inventory || []);
+            calculateStats(userInfo.Character || {});
             setIsLoading(false);
         } else {
             console.log("No user is authenticated");
             setIsLoading(false);
         }
-        console.log(playerInfo.inventory)
-    }, [isAuthenticated, playerInfo]);
+
+        console.log(userInfo?.inventory); // Manejo seguro con el operador de encadenamiento opcional
+    }, [userInfo]);
 
     const calculateStats = (characterData) => {
         const newStats = { Ataque: 0, Defensa: 0, Velocidad: 0 };
 
-        Object.values(characterData).forEach(item => {
-            if (item && item.proBarName && item.proBarPercentage) {
+        Object.values(characterData).forEach((item) => {
+            if (item?.proBarName && item?.proBarPercentage) {
                 const statName = item.proBarName;
                 const statValue = parseInt(item.proBarPercentage, 10) || 0;
 
@@ -48,54 +53,45 @@ export default function Personaje({ isAuthenticated, playerInfo }) {
         setStats(newStats);
     };
 
-    const handleEquipItem = async (item, category) => {
-        if (isAuthenticated) {
-            const itemId = item._id; // Ahora el item tiene un _id
-            const playerId = playerInfo._id; // El ID del jugador
-    
-            try {
-                const response = await axios.post('/api/equip-item', {
-                    playerId,
-                    itemId,
-                    category
-                });
-    
-                console.log('Ítem equipado:', response.data);
-                // Actualiza el estado o realiza alguna acción en el frontend
-            } catch (error) {
-                console.error('Error al equipar el ítem:', error);
-            }
-        } else {
-            console.log("No user is authenticated");
+    const handleEquipItem = (item, category) => {
+        if (character[category]) {
+            alert(`Ya tienes un objeto equipado en ${category}. Primero debes desequiparlo.`);
+            return;
         }
+
+        const updatedInventory = inventory.filter((i) => i.title !== item.title);
+        setInventory(updatedInventory);
+        setCharacter({ ...character, [category]: item });
+        
+        console.log(userInfo)
+        console.log(item)
+
+        // Opcional: Sincronizar con el backend
+        axios
+            .put(`http://localhost:5000/api/user/${userInfo.id}`, {
+                Character: { ...character, [category]: item },
+                inventory: updatedInventory,
+            })
+        .catch((error) => console.error("Error al actualizar el backend:", error));
     };
-    
-    
 
-    const unequipItem = async (category) => {
-        if (isAuthenticated) {
-            const newCharacter = { ...character, [category]: null };
-            setCharacter(newCharacter);
-            calculateStats(newCharacter);
+    const unequipItem = (category) => {
+        const updatedCharacter = { ...character, [category]: null };
+        setCharacter(updatedCharacter);
+        setInventory([...inventory, character[category]]); // Devuelve el ítem al inventario
 
-            try {
-                // Realizar la petición al backend para desequipar el ítem
-                const response = await axios.post('/api/unequip-item', {
-                    userId: playerInfo._id,
-                    category: category
-                });
-
-                console.log('Item unequipped:', response.data);
-            } catch (error) {
-                console.error('Error al desequipar el ítem:', error);
-            }
-        } else {
-            console.log("No user is authenticated");
-        }
+        // Opcional: Sincronizar con el backend
+        axios
+            .put(`http://localhost:5000/api/user/${userInfo.id}`, {
+                Character: updatedCharacter,
+                inventory: [...inventory, character[category]],
+            })
+            .catch((error) => console.error("Error al actualizar el backend:", error));
     };
+
 
     if (isLoading) {
-        return <div>Loading...</div>;
+        return <div>Cargando datos del usuario...</div>;
     }
 
     return (
@@ -111,8 +107,14 @@ export default function Personaje({ isAuthenticated, playerInfo }) {
                                     {character[category] ? (
                                         <>
                                             <p>{character[category].title}</p>
-                                            <img src={character[category].imageSrc} alt={character[category].title} className="item-image" />
-                                            <button onClick={() => unequipItem(category)}>Desequipar</button>
+                                            <img
+                                                src={character[category].imageSrc}
+                                                alt={character[category].title}
+                                                className="item-image"
+                                            />
+                                            <button onClick={() => unequipItem(category)}>
+                                                Desequipar
+                                            </button>
                                         </>
                                     ) : (
                                         <p>Vacío</p>
@@ -123,9 +125,23 @@ export default function Personaje({ isAuthenticated, playerInfo }) {
                     </div>
                     <div className="Stats">
                         <h2>Estadísticas</h2>
-                        <HoverBar name="Ataque" hoverText={stats.Ataque} percentage={stats.Ataque} color="red"/>
-                        <HoverBar name="Defensa" hoverText={stats.Defensa} percentage={stats.Defensa} />
-                        <HoverBar name="Velocidad" hoverText={stats.Velocidad} percentage={stats.Velocidad} color="skyblue"/>
+                        <HoverBar
+                            name="Ataque"
+                            hoverText={stats.Ataque}
+                            percentage={stats.Ataque}
+                            color="red"
+                        />
+                        <HoverBar
+                            name="Defensa"
+                            hoverText={stats.Defensa}
+                            percentage={stats.Defensa}
+                        />
+                        <HoverBar
+                            name="Velocidad"
+                            hoverText={stats.Velocidad}
+                            percentage={stats.Velocidad}
+                            color="skyblue"
+                        />
                     </div>
                 </div>
                 <div className="Inventory">
@@ -135,7 +151,9 @@ export default function Personaje({ isAuthenticated, playerInfo }) {
                             <div className="slot" key={index}>
                                 <p>{item.title}</p>
                                 <img src={item.imageSrc} alt={item.title} className="item-image" />
-                                <button onClick={() => handleEquipItem(item, item.category)}>Equipar</button>
+                                <button onClick={() => handleEquipItem(item, item.category)}>
+                                    Equipar
+                                </button>
                             </div>
                         ))}
                     </div>
