@@ -24,12 +24,12 @@ const userSchema = new mongoose.Schema({
     ataque: { type: Number, default: 0},
     defensa: { type: Number, default: 0},
     velocidad: { type: Number, default: 0},
-    dinero: { type: Number, default: 0 },
+    dinero: { type: Number, default: 10000000 },
     monedaPremium: { type: Number, default: 0 },
     character: {
-        armamento: { type: itemSchema, default: null }, // Un solo ítem de armamento
-        equipamiento: { type: itemSchema, default: null }, // Un solo ítem de equipamiento
-        vehiculo: { type: itemSchema, default: null }, // Un solo ítem de vehículo
+        Armamento: { type: itemSchema, default: null }, // Un solo ítem de armamento
+        Equipamiento: { type: itemSchema, default: null }, // Un solo ítem de equipamiento
+        Vehículo: { type: itemSchema, default: null }, // Un solo ítem de vehículo
     },
     inventory: [itemSchema], // Inventario que es un array de ítems
 }, { timestamps: true }); // Usamos timestamps para que guarde las fechas de creación y actualización del documento

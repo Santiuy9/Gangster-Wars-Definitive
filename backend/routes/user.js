@@ -52,7 +52,7 @@ router.get('/user', authenticateToken, async (req, res) => {
 router.put("/user/:id", authenticateToken, async (req, res) => {
     const { id } = req.params; // ID del usuario
     const { dinero, newItem } = req.body; // Datos enviados en el cuerpo de la solicitud
-
+    console.log(newItem)
     try {
         // Verificar si el usuario autenticado está actualizando su propia cuenta
         if (req.user.id !== id) {
@@ -81,5 +81,89 @@ router.put("/user/:id", authenticateToken, async (req, res) => {
     }
 });
 
+router.put("/user/:id/equipItem", authenticateToken, async (req, res) => {
+    const userId = req.params.id; // ID del usuario
+    const { equipItem, category, character, inventory } = req.body; // Datos enviados desde el frontend
+
+    console.log("Equipando ítem para el usuario:", userId);
+    console.log("Datos recibidos:", { equipItem, category });
+    
+    if (!equipItem || !category) {
+        return res.status(400).json({ message: "Faltan datos requeridos para equipar el ítem." });
+    }
+
+    try {
+        // Buscar al usuario
+        const user = await User.findById(userId);
+        console.log("Usuario encontrado en la base de datos:", user);
+
+        if (!user) {
+            return res.status(404).json({ message: "Usuario no encontrado." });
+        }
+
+        // Comprobar si ya hay un ítem equipado en esa categoría
+        if (user.character[category]) {
+            return res.status(400).json({
+                message: `Ya tienes un objeto equipado en la categoría ${category}. Primero debes desequiparlo.`,
+            });
+        }
+
+        // Agregar el ítem a la categoría del character
+        user.character[category] = equipItem;
+
+        // Filtrar el inventario para eliminar el ítem equipado
+        user.inventory = user.inventory.filter(
+            (item) => item._id.toString() !== equipItem._id
+        );
+        
+
+        console.log("Datos del usuario antes de guardar:", {
+            character: user.character,
+            inventory: user.inventory,
+        });
+        
+        // Guardar los cambios en la base de datos
+        await user.save();
+
+        return res.status(200).json({
+            message: "Ítem equipado con éxito.",
+            character: user.character,
+            inventory: user.inventory,
+        });
+    } catch (error) {
+        console.error("Error al equipar el ítem:", error);
+        return res.status(500).json({ message: "Error interno del servidor." });
+    }
+});
+
+router.put("/user/:id/unequipItem", async (req, res) => {
+    try {
+        const { id } = req.params;  // Obtener el ID del usuario desde la URL
+        const { character, inventory } = req.body;  // Recibir los datos actualizados del personaje y el inventario
+        
+        // Buscar al usuario en la base de datos
+        const user = await User.findById(id);
+        
+        if (!user) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+
+        // Actualizar los datos del personaje y el inventario en la base de datos
+        user.character = character;  // Actualizamos el personaje
+        user.inventory = inventory;  // Actualizamos el inventario
+        
+        // Guardamos los cambios
+        await user.save();
+
+        // Enviar los datos actualizados como respuesta
+        res.status(200).json({
+            character: user.character,  // Enviar el personaje actualizado
+            inventory: user.inventory,  // Enviar el inventario actualizado
+        });
+    } catch (error) {
+        console.error("Error al procesar la solicitud:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
+    }
+});
 
 module.exports = router;

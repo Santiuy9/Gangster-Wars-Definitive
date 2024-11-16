@@ -24,16 +24,19 @@ export default function Personaje() {
 
     useEffect(() => {
         if (userInfo) {
-            setCharacter(userInfo.Character || {});
+            console.log("UserInfo:", userInfo);
+            setCharacter(userInfo.character || {});
             setInventory(userInfo.inventory || []);
             calculateStats(userInfo.Character || {});
             setIsLoading(false);
+            console.log("User is authenticated");
         } else {
             console.log("No user is authenticated");
             setIsLoading(false);
         }
 
         console.log(userInfo?.inventory); // Manejo seguro con el operador de encadenamiento opcional
+        console.log(userInfo?.character); // Manejo seguro con el operador de encadenamiento opcional
     }, [userInfo]);
 
     const calculateStats = (characterData) => {
@@ -58,42 +61,107 @@ export default function Personaje() {
             alert(`Ya tienes un objeto equipado en ${category}. Primero debes desequiparlo.`);
             return;
         }
-
-        const updatedInventory = inventory.filter((i) => i.title !== item.title);
+    
+        // Obtener estados previos para posibles reversiones
+        const prevCharacter = { ...character };
+        const prevInventory = [...inventory];
+    
+        // Actualizar estados locales
+        const updatedCharacter = { ...character, [category]: item };
+        const updatedInventory = inventory.filter((i) => i._id !== item._id);
+    
+        setCharacter(updatedCharacter);
         setInventory(updatedInventory);
-        setCharacter({ ...character, [category]: item });
-        
-        console.log(userInfo)
-        console.log(item)
+    
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert("No estás autenticado. Inicia sesión.");
+            return;
+        }
 
-        // Opcional: Sincronizar con el backend
+        console.log("Datos a enviar al backend:", {
+            userId: userInfo.id,
+            equipItem: item,
+            category,
+        });
+        console.log("Token de autenticación:", token);
+    
+        // Sincronizar con el backend
         axios
-            .put(`http://localhost:5000/api/user/${userInfo.id}`, {
-                Character: { ...character, [category]: item },
-                inventory: updatedInventory,
+            .put(`http://localhost:5000/api/user/${userInfo.id}/equipItem`, { equipItem: item, category }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
             })
-        .catch((error) => console.error("Error al actualizar el backend:", error));
+        .then((response) => {
+            console.log("Respuesta del backend:", response.data);
+            const { character: serverCharacter, inventory: serverInventory } = response.data;
+            setCharacter(serverCharacter);
+            setInventory(serverInventory);
+        })
+        .catch((error) => {
+            console.error("Error al actualizar el backend:", error);
+            console.log("Error al enviar solicitud PUT a equipItem:", error.response);
+            setCharacter(prevCharacter);
+            setInventory(prevInventory);
+            alert("No se pudo equipar el ítem. Intenta nuevamente.");
+        });
     };
-
-    const unequipItem = (category) => {
+    
+    const handleUnequipItem = (category) => {
+        const unequippedItem = character[category];
+        
         const updatedCharacter = { ...character, [category]: null };
         setCharacter(updatedCharacter);
+        
+        const updatedInventory = [...inventory, unequippedItem];
         setInventory([...inventory, character[category]]); // Devuelve el ítem al inventario
-
+        
         // Opcional: Sincronizar con el backend
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert("No estás autenticado. Inicia sesión.");
+            return;
+        }
+        console.log("Datos a enviar al backend:", {
+            userId: userInfo.id,
+            unequippedItem,
+            category,
+        });
+
+        // Enviar la solicitud PUT al backend para actualizar los datos
         axios
-            .put(`http://localhost:5000/api/user/${userInfo.id}`, {
-                Character: updatedCharacter,
-                inventory: [...inventory, character[category]],
+            .put(`http://localhost:5000/api/user/${userInfo.id}/unequipItem`, {
+                character: updatedCharacter,  // Actualizamos los datos del personaje
+                inventory: updatedInventory,  // Añadimos el ítem de vuelta al inventario
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
             })
-            .catch((error) => console.error("Error al actualizar el backend:", error));
+        .then((response) => {
+            console.log("Respuesta del backend:", response.data);
+            const { character: serverCharacter, inventory: serverInventory } = response.data;
+            setCharacter(serverCharacter);
+            setInventory(serverInventory);
+        })
+        .catch((error) => {
+            console.error("Error al actualizar el backend:", error);
+            // En caso de error, revertimos los cambios locales
+            setCharacter({ ...character });
+            setInventory([...inventory]);
+            alert("No se pudo desequipar el ítem. Intenta nuevamente.");
+        });
+        console.log(inventory)
+        console.log(userInfo)
     };
 
-
+    
+    
     if (isLoading) {
         return <div>Cargando datos del usuario...</div>;
     }
-
+    
     return (
         <div className="PrincipalContainer Personaje">
             <h1>Personaje</h1>
@@ -112,7 +180,7 @@ export default function Personaje() {
                                                 alt={character[category].title}
                                                 className="item-image"
                                             />
-                                            <button onClick={() => unequipItem(category)}>
+                                            <button onClick={() => handleUnequipItem(category)}>
                                                 Desequipar
                                             </button>
                                         </>
@@ -160,5 +228,5 @@ export default function Personaje() {
                 </div>
             </div>
         </div>
-    );
+    )
 }

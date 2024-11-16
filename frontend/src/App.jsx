@@ -64,7 +64,7 @@ function AppContent() {
         setUserInfo(null);
     };
 
-    console.log(isAuthenticated)
+    // console.log(isAuthenticated)
     return (
         <Router>
             <Header 
