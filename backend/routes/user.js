@@ -37,6 +37,8 @@ router.get('/user', authenticateToken, async (req, res) => {
             energia: user.energia,
             dinero: user.dinero,
             monedaPremium: user.monedaPremium,
+            character: user.character,
+            inventory: user.inventory,
         };
     
         res.json(userData);
@@ -46,5 +48,38 @@ router.get('/user', authenticateToken, async (req, res) => {
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
+
+router.put("/user/:id", authenticateToken, async (req, res) => {
+    const { id } = req.params; // ID del usuario
+    const { dinero, newItem } = req.body; // Datos enviados en el cuerpo de la solicitud
+
+    try {
+        // Verificar si el usuario autenticado está actualizando su propia cuenta
+        if (req.user.id !== id) {
+            return res.status(403).json({ message: "No tienes permiso para realizar esta acción" });
+        }
+
+        // Busca al usuario en la base de datos
+        const user = await User.findById(id);
+
+        if (!user) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        // Actualizar dinero e inventario
+        user.dinero = dinero;
+        if (newItem) {
+            user.inventory.push(newItem); // Agregar el nuevo ítem al inventario
+        }
+
+        await user.save(); // Guardar los cambios
+
+        res.json({ message: "Datos actualizados correctamente", dinero: user.dinero, inventory: user.inventory });
+    } catch (error) {
+        console.error("Error al actualizar el usuario:", error);
+        res.status(500).json({ message: "Error del servidor" });
+    }
+});
+
 
 module.exports = router;

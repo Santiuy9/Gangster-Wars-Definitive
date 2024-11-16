@@ -21,6 +21,9 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     vida: { type: Number, default: 100 },
     energia: { type: Number, default: 100 },
+    ataque: { type: Number, default: 0},
+    defensa: { type: Number, default: 0},
+    velocidad: { type: Number, default: 0},
     dinero: { type: Number, default: 0 },
     monedaPremium: { type: Number, default: 0 },
     character: {
