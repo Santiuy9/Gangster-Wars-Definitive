@@ -84,12 +84,12 @@ router.put("/user/:id", authenticateToken, async (req, res) => {
 
 router.put("/user/:id/equipItem", authenticateToken, async (req, res) => {
     const userId = req.params.id; // ID del usuario
-    const { equipItem, category, newStats } = req.body; // Datos enviados desde el frontend
+    const { character, inventory, stats } = req.body; // Datos enviados desde el frontend
 
     console.log("Equipando ítem para el usuario:", userId);
-    console.log("Datos recibidos:", { equipItem, category, newStats });
+    console.log("Datos recibidos:", { character, inventory, stats });
 
-    if (!equipItem || !category || !newStats) {
+    if (!character || !inventory || !stats) {
         return res.status(400).json({ message: "Faltan datos requeridos para equipar el ítem." });
     }
 
@@ -102,36 +102,21 @@ router.put("/user/:id/equipItem", authenticateToken, async (req, res) => {
             return res.status(404).json({ message: "Usuario no encontrado." });
         }
 
-        // Comprobar si ya hay un ítem equipado en esa categoría
-        if (user.character[category]) {
-            return res.status(400).json({
-                message: `Ya tienes un objeto equipado en la categoría ${category}. Primero debes desequiparlo.`,
-            });
-        }
+        // Actualizar el personaje con el nuevo `character`
+        user.character = character;
 
-        // Agregar el ítem a la categoría del character
-        user.character[category] = equipItem;
+        // Actualizar las estadísticas del personaje con `stats`
+        user.stats.ataque = stats.Ataque || user.stats.ataque;
+        user.stats.defensa = stats.Defensa || user.stats.defensa;
+        user.stats.velocidad = stats.Velocidad || user.stats.velocidad;
 
-        // Actualizar las estadísticas del personaje según `newStats`
-        user.stats.ataque = newStats.Ataque || user.stats.ataque;
-        user.stats.defensa = newStats.Defensa || user.stats.defensa;
-        user.stats.velocidad = newStats.Velocidad || user.stats.velocidad;
-
-        // Filtrar el inventario para eliminar el ítem equipado
-        user.inventory = user.inventory.filter(
-            (item) => item._id.toString() !== equipItem._id
-        );
-
-        // console.log("Datos del usuario antes de guardar:", {
-        //     character: user.character,
-        //     inventory: user.inventory,
-        //     stats: user.stats,
-        // });
+        // Actualizar el inventario con el nuevo `inventory`
+        user.inventory = inventory;
 
         // Guardar los cambios en la base de datos
         await user.save();
 
-        console.log("Datos del usuario despues de guardar:", {
+        console.log("Datos del usuario después de guardar:", {
             character: user.character,
             inventory: user.inventory,
             stats: user.stats,
@@ -149,50 +134,84 @@ router.put("/user/:id/equipItem", authenticateToken, async (req, res) => {
     }
 });
 
+router.put("/user/:id/unequipItem", authenticateToken, async (req, res) => {
+    const userId = req.params.id; // ID del usuario
+    const { category, unequippedItem, newStats } = req.body; // Datos enviados desde el frontend
 
+    console.log("Desequipando ítem para el usuario:", userId);
+    console.log("Datos recibidos:", { category, unequippedItem, newStats });
 
+    if (!category || !unequippedItem || !newStats) {
+        return res.status(400).json({ message: "Faltan datos requeridos para desequipar el ítem." });
+    }
 
-router.put("/user/:id/unequipItem", async (req, res) => {
     try {
-        const { id } = req.params; // Obtener el ID del usuario desde la URL
-        const { character, inventory, newStats } = req.body; // Recibir datos actualizados del personaje, inventario y stats
-
-        // Buscar al usuario en la base de datos
-        const user = await User.findById(id);
-
+        // Buscar al usuario
+        const user = await User.findById(userId);
         if (!user) {
-            return res.status(404).json({ error: "Usuario no encontrado" });
+            return res.status(404).json({ message: "Usuario no encontrado." });
         }
 
-        // Actualizar el personaje, inventario y estadísticas del usuario
-        user.character = character; // Actualizamos el personaje
-        user.inventory = inventory; // Actualizamos el inventario
+        // Verificar que haya un ítem en la categoría para desequipar
+        if (!user.character[category]) {
+            return res.status(400).json({
+                message: `No tienes un objeto equipado en la categoría ${category}.`,
+            });
+        }
 
-        // Actualizamos las estadísticas del usuario
-        user.stats.ataque = newStats.Ataque || user.stats.ataque;
-        user.stats.defensa = newStats.Defensa || user.stats.defensa;
-        user.stats.velocidad = newStats.Velocidad || user.stats.velocidad;
+        // Verificar que el ítem que se intenta desequipar sea el mismo que está equipado en la categoría
+        if (user.character[category]._id.toString() !== unequippedItem._id) {
+            return res.status(400).json({ message: "El ítem enviado no coincide con el equipado." });
+        }
+
+        // Eliminar el ítem de la categoría en `character`
+        user.character[category] = null;
+
+        // Agregar el ítem al inventario si no está duplicado
+        if (!user.inventory.some((item) => item._id.toString() === unequippedItem._id)) {
+            user.inventory.push(unequippedItem);
+        }
+
+        // Restar las estadísticas de acuerdo a la categoría del ítem
+        switch (category) {
+            case "Armamento":
+                user.stats.ataque -= newStats.ataque || 0;
+                break;
+            case "Equipamiento":
+                user.stats.defensa -= newStats.defensa || 0;
+                break;
+            case "Vehículo":
+                user.stats.velocidad -= newStats.velocidad || 0;
+                break;
+            default:
+                return res.status(400).json({ message: "Categoría no válida." });
+        }
 
         // Guardar los cambios en la base de datos
         await user.save();
 
-        console.log("Datos del usuario despues de guardar:", {
+        console.log("Linea 193 - Datos del usuario después de guardar:", {
             character: user.character,
             inventory: user.inventory,
             stats: user.stats,
         });
 
-        // Enviar los datos actualizados como respuesta
-        res.status(200).json({
-            character: user.character, // Enviar el personaje actualizado
-            inventory: user.inventory, // Enviar el inventario actualizado
+        return res.status(200).json({
+            message: "Ítem desequipado con éxito.",
+            character: user.character,
+            inventory: user.inventory,
             stats: user.stats, // Enviar las estadísticas actualizadas
         });
     } catch (error) {
-        console.error("Error al procesar la solicitud:", error);
-        res.status(500).json({ error: "Error interno del servidor" });
+        console.error("Error al desequipar el ítem:", error);
+        return res.status(500).json({ 
+            message: "Error interno del servidor.", 
+            error: error.message 
+        });
     }
 });
+
+
 
 
 module.exports = router;

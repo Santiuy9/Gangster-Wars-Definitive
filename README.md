@@ -20,3 +20,8 @@ FALTA agregar logica de Backend al equipar y desequipar Items desde Personaje.js
 Personaje.jsx ya se vincula con el Backend excelente
 
 FALTA: Personaje.jsx debe manejar la logica de los Stats al equipar y desequipar objetos
+
+<<<Version 0.2 (Start with Misiones.jsx)>>>
+Personaje.jsx ya tiene todas sus funciones (Terminado)
+
+FALTA Misiones.jsx no aparece al navegar hacia el componente

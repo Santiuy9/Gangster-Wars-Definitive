@@ -68,37 +68,32 @@ export default function Personaje() {
     };
 
     const handleEquipItem = (item, category) => {
-        // Comprobar si ya hay un objeto equipado en esta categoría
+        // Verificar si ya hay un objeto equipado en esta categoría
         if (character[category]) {
-            alert(`Ya tienes un objeto equipado en ${category}. Primero debes desequiparlo.`);
+            alert(`Ya tienes un objeto equipado en la categoría "${category}". Desequípalo antes de continuar.`);
             return;
         }
     
-        // Obtener estados previos para posibles reversiones
-        const prevCharacter = { ...character };
-        const prevInventory = [...inventory];
-    
         // Actualizar el personaje (equipar el objeto)
         const updatedCharacter = { ...character, [category]: item };
+    
+        // Eliminar el objeto del inventario
         const updatedInventory = inventory.filter((i) => i._id !== item._id);
     
-        // Actualizar las estadísticas en base al estado actual
-        const updatedStats = { ...stats };
-    
-        if (item.category === "Armamento") {
-            updatedStats.Ataque += parseInt(item.damage, 10) || 0; // Sumar a Ataque
-        }
-        if (item.category === "Equipamiento") {
-            updatedStats.Defensa += parseInt(item.defense, 10) || 0; // Sumar a Defensa
-        }
-        if (item.category === "Vehículo") {
-            updatedStats.Velocidad += parseInt(item.speed, 10) || 0; // Sumar a Velocidad
+        // Determinar la estadística que se debe actualizar
+        const updatedStats = { ...stats }; // Crear una copia de las estadísticas actuales
+        if (category === "Armamento") {
+            updatedStats.Ataque += parseInt(item.damage, 10) || 0;
+        } else if (category === "Equipamiento") {
+            updatedStats.Defensa += parseInt(item.defense, 10) || 0;
+        } else if (category === "Vehículo") {
+            updatedStats.Velocidad += parseInt(item.speed, 10) || 0;
         }
     
         // Sincronizar con el backend
         const token = localStorage.getItem("token");
         if (!token) {
-            alert("No estás autenticado. Inicia sesión.");
+            alert("No estás autenticado. Inicia sesión para continuar.");
             return;
         }
     
@@ -106,9 +101,9 @@ export default function Personaje() {
             .put(
                 `http://localhost:5000/api/user/${userInfo.id}/equipItem`,
                 {
-                    equipItem: item,      // Objeto que estamos equipando
-                    category,             // Categoría (armamento, defensa, etc.)
-                    newStats: updatedStats, // Pasar las nuevas estadísticas
+                    character: updatedCharacter,
+                    inventory: updatedInventory,
+                    stats: updatedStats, // Nuevas estadísticas
                 },
                 {
                     headers: {
@@ -117,125 +112,91 @@ export default function Personaje() {
                 }
             )
             .then((response) => {
-                console.log("Respuesta del backend:", response.data);
+                console.log("Respuesta del servidor:", response.data);
     
                 const { character: serverCharacter, inventory: serverInventory, stats: serverStats } = response.data;
-    
-                // Verificar que la respuesta sea correcta
-                console.log("Datos después de la respuesta del backend:", {
-                    serverCharacter,
-                    serverInventory,
-                    serverStats,
-                });
     
                 // Actualizar estados locales con los datos del servidor
                 setCharacter(serverCharacter);
                 setInventory(serverInventory);
-                setStats(serverStats); // Actualiza las estadísticas correctamente
+                setStats(serverStats);
     
-                // Actualizar también el inventario local en el estado
-                setCharacter({ ...serverCharacter }); // Asegúrate de pasar un objeto nuevo
-                setInventory([...serverInventory]); // Asegúrate de pasar una copia del inventario
-                setStats({ ...serverStats }); // Asegúrate de pasar un objeto nuevo para las stats
+                // Actualizar el contexto global (userInfo)
+                setUserInfo((prevUserInfo) => ({
+                    ...prevUserInfo,
+                    character: serverCharacter,
+                    inventory: serverInventory,
+                    stats: serverStats,
+                }));
+    
+                // alert(`El objeto "${item.title}" se ha equipado correctamente en la categoría "${category}".`);
             })
             .catch((error) => {
-                console.error("Error al actualizar el backend:", error);
-                // Restaurar estados previos si algo falla
-                setCharacter(prevCharacter);
-                setInventory(prevInventory);
-                setStats(prevStats);
-                alert("No se pudo equipar el ítem. Intenta nuevamente.");
+                console.error("Error al sincronizar con el servidor:", error);
+                alert("Ocurrió un error al intentar equipar el objeto. Intenta nuevamente.");
             });
     };
-    
-    
-    
 
-    const handleUnequipItem = (category) => {
-        const unequippedItem = character[category]; // Ítem a desequipar
-        console.log(unequippedItem)
-    
-        if (!unequippedItem) {
-            alert("No tienes un ítem equipado en esta categoría.");
+    const handleUnequipItem = async (item, category) => {
+        if (!item || !category) {
+            console.error("Faltan datos necesarios para desequipar el ítem.");
             return;
         }
-    
-        // Obtener los valores para restar de las estadísticas
-        const removedStats = userInfo.stats;
-    
-        if (unequippedItem.category === "Armamento") {
-            removedStats.Ataque = parseInt(unequippedItem.damage, 10) || 0;
-        }
-        if (unequippedItem.category === "Equipamiento") {
-            removedStats.Defensa = parseInt(unequippedItem.defense, 10) || 0;
-        }
-        if (unequippedItem.category === "Vehículo") {
-            removedStats.Velocidad = parseInt(unequippedItem.speed, 10) || 0;
-        }
+        console.log(item)
 
-        console.log(removedStats)
-    
-        // Actualizar las estadísticas localmente
-        const newStats = {
-            Ataque: userInfo.stats.ataque - removedStats.Ataque,
-            Defensa: userInfo.stats.defensa - removedStats.Defensa,
-            Velocidad: userInfo.stats.velocidad - removedStats.Velocidad,
-        };
-        
-        console.log(newStats)
-        
-        // Actualizar el personaje y el inventario localmente
-        const updatedCharacter = { ...character, [category]: null }; // Eliminar el ítem equipado
-        const updatedInventory = [...inventory, unequippedItem]; // Agregar el ítem al inventario
-        
-        setStats(newStats);
-        console.log(newStats)
-        setCharacter(updatedCharacter);
-        setInventory(updatedInventory);
-    
-        // Sincronizar con el backend
-        const token = localStorage.getItem("token");
-        if (!token) {
-            alert("No estás autenticado. Inicia sesión.");
-            return;
+        const statToRemove = {ataque: 0, defensa: 0, velocidad: 0}; // Crear una copia de las estadísticas actuales
+        if (category === "Armamento") {
+            statToRemove.ataque = parseInt(item.damage, 10) || 0;
+        } else if (category === "Equipamiento") {
+            statToRemove.defensa = parseInt(item.defense, 10) || 0;
+        } else if (category === "Vehículo") {
+            statToRemove.velocidad = parseInt(item.speed, 10) || 0;
         }
     
-        // Enviar la solicitud PUT para actualizar el personaje y las estadísticas
-        axios
-            .put(
-                `http://localhost:5000/api/user/${userInfo.id}/unequipItem`,
-                {
-                    character: updatedCharacter,
-                    inventory: updatedInventory,
-                    newStats, // Mandamos las nuevas estadísticas calculadas
+        console.log(statToRemove)
+
+        try {
+            const userId = userInfo.id; // ID del usuario
+            const token = localStorage.getItem("token"); // Token de autenticación
+    
+            // Calcular nuevas estadísticas restando los valores del ítem desequipado
+            const newStats = statToRemove
+
+            console.log(newStats)
+    
+            // Preparar los datos para enviar al backend
+            const requestData = {
+                category, // Categoría del objeto desequipado
+                unequippedItem: item, // El objeto que se desea desequipar
+                newStats, // Nuevas estadísticas calculadas
+            };
+    
+            // Enviar solicitud al backend
+            const response = await axios.put(`/api/user/${userId}/unequipItem`, requestData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
                 },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            )
-            .then((response) => {
-                console.log("Respuesta del backend:", response.data);
-                const { character: serverCharacter, inventory: serverInventory, stats: serverStats } = response.data;
-    
-                // Actualizar los estados con la respuesta del backend
-                setCharacter(serverCharacter);
-                setInventory(serverInventory);
-                setStats(serverStats); // Actualizar estadísticas del servidor
-    
-                // alert("Ítem desequipado con éxito.");
-            })
-            .catch((error) => {
-                console.error("Error al actualizar el backend:", error);
-                alert("No se pudo desequipar el ítem. Intenta nuevamente.");
-    
-                // Restaurar el estado local en caso de error
-                setCharacter({ ...character });
-                setInventory([...inventory]);
-                setStats({ ...stats });
             });
+    
+            // Manejar la respuesta
+            if (response.status === 200) {
+                console.log("Ítem desequipado con éxito:", response.data);
+                // Actualizar la UI con los datos del servidor
+                setUserInfo((prev) => ({
+                    ...prev,
+                    character: response.data.character, // Actualiza los ítems equipados
+                    inventory: response.data.inventory, // Actualiza el inventario
+                    stats: response.data.stats, // Actualiza las estadísticas del personaje
+                }));
+                console.log(userInfo)
+            } else {
+                console.error("Error al desequipar el ítem:", response.data.message);
+            }
+        } catch (error) {
+            console.error("Error al desequipar el ítem:", error.response?.data || error.message);
+        }
     };
+    
     
     
 
@@ -261,7 +222,8 @@ export default function Personaje() {
                                                 alt={character[category].title}
                                                 className="item-image"
                                             />
-                                            <button onClick={() => handleUnequipItem(category)}>
+                                            {/* Ajuste aquí: Pasar el objeto y la categoría */}
+                                            <button onClick={() => handleUnequipItem(character[category], category)}>
                                                 Desequipar
                                             </button>
                                         </>
@@ -272,23 +234,24 @@ export default function Personaje() {
                             ))}
                         </div>
                     </div>
+
                     <div className="Stats">
                         <h2>Estadísticas</h2>
                         <HoverBar
                             name="Ataque"
-                            hoverText={`Daño: ${character?.Armamento?.damage || 0}`}
-                            // percentage={stats.Ataque}
+                            hoverText={`${character?.Armamento?.damage || 0} puntos`}
+                            percentage={stats.Ataque}
                             color="red"
                         />
                         <HoverBar
                             name="Defensa"
-                            hoverText={`Defensa: ${character?.Equipamiento?.defense || 0}`}
-                            // percentage={stats.Defensa}
+                            hoverText={`${character?.Equipamiento?.defense || 0} puntos`}
+                            percentage={stats.Defensa}
                         />
                         <HoverBar
                             name="Velocidad"
-                            hoverText={`Velocidad: ${character?.Vehículo?.speed || 0}`}
-                            // percentage={stats.Velocidad}
+                            hoverText={`${character?.Vehículo?.speed || 0} puntos`}
+                            percentage={stats.Velocidad}
                             color="skyblue"
                         />
                     </div>
