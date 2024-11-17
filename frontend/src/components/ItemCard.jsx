@@ -98,7 +98,7 @@ export default function ItemCard({
     };
 
     const handleBuyClick = () => {
-        const item = {
+        let item = {
             imageSrc,
             title,
             description,
@@ -107,8 +107,15 @@ export default function ItemCard({
             proBarName,
             proBarTxtColor,
             proBarBgColor,
-            damage: proBarPercentage,
         };
+        if (category === "Armamento") {
+            item = { ...item, damage: proBarPercentage };
+        } else if (category === "Equipamiento") {
+            item = { ...item, defense: proBarPercentage };
+        } else if (category === "Vehículo") {
+            item = { ...item, speed: proBarPercentage };
+        }
+
         handlePurchase(item, parseInt(price));
     };
 

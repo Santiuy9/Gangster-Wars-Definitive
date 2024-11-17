@@ -14,6 +14,27 @@ const itemSchema = new mongoose.Schema({
     imageSrc: { type: String } // Ruta de imagen del objeto
 });
 
+// Middleware pre-save para modificar los datos antes de guardarlos
+itemSchema.pre('save', function(next) {
+    // Si la categoría es "Armamento", eliminamos los campos no relevantes
+    if (this.category === 'Armamento') {
+        this.defense = undefined; // No guardamos la defensa
+        this.speed = undefined;   // No guardamos la velocidad
+    }
+    // Si la categoría es "Equipamiento", eliminamos los campos no relevantes
+    else if (this.category === 'Equipamiento') {
+        this.damage = undefined;  // No guardamos el daño
+        this.speed = undefined;   // No guardamos la velocidad
+    }
+    // Si la categoría es "Vehículo", eliminamos los campos no relevantes
+    else if (this.category === 'Vehículo') {
+        this.damage = undefined;  // No guardamos el daño
+        this.defense = undefined; // No guardamos la defensa
+    }
+    
+    next(); // Continuamos con el guardado
+});
+
 // Esquema principal del usuario
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
@@ -21,22 +42,25 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     vida: { type: Number, default: 100 },
     energia: { type: Number, default: 100 },
-    ataque: { type: Number, default: 0},
-    defensa: { type: Number, default: 0},
-    velocidad: { type: Number, default: 0},
     dinero: { type: Number, default: 10000000 },
     monedaPremium: { type: Number, default: 0 },
-    character: {
-        Armamento: { type: itemSchema, default: null }, // Un solo ítem de armamento
-        Equipamiento: { type: itemSchema, default: null }, // Un solo ítem de equipamiento
-        Vehículo: { type: itemSchema, default: null }, // Un solo ítem de vehículo
+    stats: {  // Subobjeto para las estadísticas
+        ataque: { type: Number, default: 0 },
+        defensa: { type: Number, default: 0 },
+        velocidad: { type: Number, default: 0 },
     },
-    inventory: [itemSchema], // Inventario que es un array de ítems
-}, { timestamps: true }); // Usamos timestamps para que guarde las fechas de creación y actualización del documento
+    character: {
+        Armamento: { type: itemSchema, default: null },
+        Equipamiento: { type: itemSchema, default: null },
+        Vehículo: { type: itemSchema, default: null },
+    },
+    inventory: [itemSchema],
+}, { timestamps: true });
 
 // Creamos el modelo de User
 const User = mongoose.model('User', userSchema);
 module.exports = User;
+
 
 
 // const mongoose = require('mongoose');

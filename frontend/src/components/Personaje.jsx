@@ -17,9 +17,9 @@ export default function Personaje() {
     const [inventory, setInventory] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [stats, setStats] = useState({
-        Ataque: 0,
-        Defensa: 0,
-        Velocidad: 0,
+        Ataque: userInfo?.stats?.ataque || 0,
+        Defensa: userInfo?.stats?.defensa || 0,
+        Velocidad: userInfo?.stats?.velocidad || 0,
     });
 
     useEffect(() => {
@@ -27,29 +27,40 @@ export default function Personaje() {
             console.log("UserInfo:", userInfo);
             setCharacter(userInfo.character || {});
             setInventory(userInfo.inventory || []);
-            calculateStats(userInfo.Character || {});
+            calculateStats(userInfo.character || {});
             setIsLoading(false);
             console.log("User is authenticated");
         } else {
-            console.log("No user is authenticated");
+            // console.log("No user is authenticated");
             setIsLoading(false);
         }
 
-        console.log(userInfo?.inventory); // Manejo seguro con el operador de encadenamiento opcional
-        console.log(userInfo?.character); // Manejo seguro con el operador de encadenamiento opcional
+        console.log(userInfo); // Manejo seguro con el operador de encadenamiento opcional
     }, [userInfo]);
+
+    useEffect(() => {
+        if (userInfo?.stats) {
+            setStats({
+                Ataque: userInfo.stats.ataque,
+                Defensa: userInfo.stats.defensa,
+                Velocidad: userInfo.stats.velocidad,
+            });
+        }
+    }, [userInfo?.stats]);
+    
 
     const calculateStats = (characterData) => {
         const newStats = { Ataque: 0, Defensa: 0, Velocidad: 0 };
 
         Object.values(characterData).forEach((item) => {
-            if (item?.proBarName && item?.proBarPercentage) {
-                const statName = item.proBarName;
-                const statValue = parseInt(item.proBarPercentage, 10) || 0;
-
-                if (statName === "Daño") newStats.Ataque += statValue;
-                if (statName === "Defensa") newStats.Defensa += statValue;
-                if (statName === "Velocidad") newStats.Velocidad += statValue;
+            if (item?.damage) {
+                newStats.Ataque += item.damage; // Para armamento
+            }
+            if (item?.defense) {
+                newStats.Defensa += item.defense; // Para equipamiento
+            }
+            if (item?.speed) {
+                newStats.Velocidad += item.speed; // Para vehículos
             }
         });
 
@@ -57,6 +68,7 @@ export default function Personaje() {
     };
 
     const handleEquipItem = (item, category) => {
+        // Comprobar si ya hay un objeto equipado en esta categoría
         if (character[category]) {
             alert(`Ya tienes un objeto equipado en ${category}. Primero debes desequiparlo.`);
             return;
@@ -66,102 +78,171 @@ export default function Personaje() {
         const prevCharacter = { ...character };
         const prevInventory = [...inventory];
     
-        // Actualizar estados locales
+        // Actualizar el personaje (equipar el objeto)
         const updatedCharacter = { ...character, [category]: item };
         const updatedInventory = inventory.filter((i) => i._id !== item._id);
     
+        // Actualizar las estadísticas en base al estado actual
+        const updatedStats = { ...stats };
+    
+        if (item.category === "Armamento") {
+            updatedStats.Ataque += parseInt(item.damage, 10) || 0; // Sumar a Ataque
+        }
+        if (item.category === "Equipamiento") {
+            updatedStats.Defensa += parseInt(item.defense, 10) || 0; // Sumar a Defensa
+        }
+        if (item.category === "Vehículo") {
+            updatedStats.Velocidad += parseInt(item.speed, 10) || 0; // Sumar a Velocidad
+        }
+    
+        // Sincronizar con el backend
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert("No estás autenticado. Inicia sesión.");
+            return;
+        }
+    
+        axios
+            .put(
+                `http://localhost:5000/api/user/${userInfo.id}/equipItem`,
+                {
+                    equipItem: item,      // Objeto que estamos equipando
+                    category,             // Categoría (armamento, defensa, etc.)
+                    newStats: updatedStats, // Pasar las nuevas estadísticas
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            )
+            .then((response) => {
+                console.log("Respuesta del backend:", response.data);
+    
+                const { character: serverCharacter, inventory: serverInventory, stats: serverStats } = response.data;
+    
+                // Verificar que la respuesta sea correcta
+                console.log("Datos después de la respuesta del backend:", {
+                    serverCharacter,
+                    serverInventory,
+                    serverStats,
+                });
+    
+                // Actualizar estados locales con los datos del servidor
+                setCharacter(serverCharacter);
+                setInventory(serverInventory);
+                setStats(serverStats); // Actualiza las estadísticas correctamente
+    
+                // Actualizar también el inventario local en el estado
+                setCharacter({ ...serverCharacter }); // Asegúrate de pasar un objeto nuevo
+                setInventory([...serverInventory]); // Asegúrate de pasar una copia del inventario
+                setStats({ ...serverStats }); // Asegúrate de pasar un objeto nuevo para las stats
+            })
+            .catch((error) => {
+                console.error("Error al actualizar el backend:", error);
+                // Restaurar estados previos si algo falla
+                setCharacter(prevCharacter);
+                setInventory(prevInventory);
+                setStats(prevStats);
+                alert("No se pudo equipar el ítem. Intenta nuevamente.");
+            });
+    };
+    
+    
+    
+
+    const handleUnequipItem = (category) => {
+        const unequippedItem = character[category]; // Ítem a desequipar
+        console.log(unequippedItem)
+    
+        if (!unequippedItem) {
+            alert("No tienes un ítem equipado en esta categoría.");
+            return;
+        }
+    
+        // Obtener los valores para restar de las estadísticas
+        const removedStats = userInfo.stats;
+    
+        if (unequippedItem.category === "Armamento") {
+            removedStats.Ataque = parseInt(unequippedItem.damage, 10) || 0;
+        }
+        if (unequippedItem.category === "Equipamiento") {
+            removedStats.Defensa = parseInt(unequippedItem.defense, 10) || 0;
+        }
+        if (unequippedItem.category === "Vehículo") {
+            removedStats.Velocidad = parseInt(unequippedItem.speed, 10) || 0;
+        }
+
+        console.log(removedStats)
+    
+        // Actualizar las estadísticas localmente
+        const newStats = {
+            Ataque: userInfo.stats.ataque - removedStats.Ataque,
+            Defensa: userInfo.stats.defensa - removedStats.Defensa,
+            Velocidad: userInfo.stats.velocidad - removedStats.Velocidad,
+        };
+        
+        console.log(newStats)
+        
+        // Actualizar el personaje y el inventario localmente
+        const updatedCharacter = { ...character, [category]: null }; // Eliminar el ítem equipado
+        const updatedInventory = [...inventory, unequippedItem]; // Agregar el ítem al inventario
+        
+        setStats(newStats);
+        console.log(newStats)
         setCharacter(updatedCharacter);
         setInventory(updatedInventory);
     
-        const token = localStorage.getItem("token");
-        if (!token) {
-            alert("No estás autenticado. Inicia sesión.");
-            return;
-        }
-
-        console.log("Datos a enviar al backend:", {
-            userId: userInfo.id,
-            equipItem: item,
-            category,
-        });
-        console.log("Token de autenticación:", token);
-    
         // Sincronizar con el backend
-        axios
-            .put(`http://localhost:5000/api/user/${userInfo.id}/equipItem`, { equipItem: item, category }, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            })
-        .then((response) => {
-            console.log("Respuesta del backend:", response.data);
-            const { character: serverCharacter, inventory: serverInventory } = response.data;
-            setCharacter(serverCharacter);
-            setInventory(serverInventory);
-        })
-        .catch((error) => {
-            console.error("Error al actualizar el backend:", error);
-            console.log("Error al enviar solicitud PUT a equipItem:", error.response);
-            setCharacter(prevCharacter);
-            setInventory(prevInventory);
-            alert("No se pudo equipar el ítem. Intenta nuevamente.");
-        });
-    };
-    
-    const handleUnequipItem = (category) => {
-        const unequippedItem = character[category];
-        
-        const updatedCharacter = { ...character, [category]: null };
-        setCharacter(updatedCharacter);
-        
-        const updatedInventory = [...inventory, unequippedItem];
-        setInventory([...inventory, character[category]]); // Devuelve el ítem al inventario
-        
-        // Opcional: Sincronizar con el backend
         const token = localStorage.getItem("token");
         if (!token) {
             alert("No estás autenticado. Inicia sesión.");
             return;
         }
-        console.log("Datos a enviar al backend:", {
-            userId: userInfo.id,
-            unequippedItem,
-            category,
-        });
-
-        // Enviar la solicitud PUT al backend para actualizar los datos
+    
+        // Enviar la solicitud PUT para actualizar el personaje y las estadísticas
         axios
-            .put(`http://localhost:5000/api/user/${userInfo.id}/unequipItem`, {
-                character: updatedCharacter,  // Actualizamos los datos del personaje
-                inventory: updatedInventory,  // Añadimos el ítem de vuelta al inventario
-            }, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
+            .put(
+                `http://localhost:5000/api/user/${userInfo.id}/unequipItem`,
+                {
+                    character: updatedCharacter,
+                    inventory: updatedInventory,
+                    newStats, // Mandamos las nuevas estadísticas calculadas
                 },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            )
+            .then((response) => {
+                console.log("Respuesta del backend:", response.data);
+                const { character: serverCharacter, inventory: serverInventory, stats: serverStats } = response.data;
+    
+                // Actualizar los estados con la respuesta del backend
+                setCharacter(serverCharacter);
+                setInventory(serverInventory);
+                setStats(serverStats); // Actualizar estadísticas del servidor
+    
+                // alert("Ítem desequipado con éxito.");
             })
-        .then((response) => {
-            console.log("Respuesta del backend:", response.data);
-            const { character: serverCharacter, inventory: serverInventory } = response.data;
-            setCharacter(serverCharacter);
-            setInventory(serverInventory);
-        })
-        .catch((error) => {
-            console.error("Error al actualizar el backend:", error);
-            // En caso de error, revertimos los cambios locales
-            setCharacter({ ...character });
-            setInventory([...inventory]);
-            alert("No se pudo desequipar el ítem. Intenta nuevamente.");
-        });
-        console.log(inventory)
-        console.log(userInfo)
+            .catch((error) => {
+                console.error("Error al actualizar el backend:", error);
+                alert("No se pudo desequipar el ítem. Intenta nuevamente.");
+    
+                // Restaurar el estado local en caso de error
+                setCharacter({ ...character });
+                setInventory([...inventory]);
+                setStats({ ...stats });
+            });
     };
+    
+    
 
-    
-    
     if (isLoading) {
         return <div>Cargando datos del usuario...</div>;
     }
-    
+
     return (
         <div className="PrincipalContainer Personaje">
             <h1>Personaje</h1>
@@ -195,19 +276,19 @@ export default function Personaje() {
                         <h2>Estadísticas</h2>
                         <HoverBar
                             name="Ataque"
-                            hoverText={stats.Ataque}
-                            percentage={stats.Ataque}
+                            hoverText={`Daño: ${character?.Armamento?.damage || 0}`}
+                            // percentage={stats.Ataque}
                             color="red"
                         />
                         <HoverBar
                             name="Defensa"
-                            hoverText={stats.Defensa}
-                            percentage={stats.Defensa}
+                            hoverText={`Defensa: ${character?.Equipamiento?.defense || 0}`}
+                            // percentage={stats.Defensa}
                         />
                         <HoverBar
                             name="Velocidad"
-                            hoverText={stats.Velocidad}
-                            percentage={stats.Velocidad}
+                            hoverText={`Velocidad: ${character?.Vehículo?.speed || 0}`}
+                            // percentage={stats.Velocidad}
                             color="skyblue"
                         />
                     </div>
@@ -228,5 +309,5 @@ export default function Personaje() {
                 </div>
             </div>
         </div>
-    )
+    );
 }

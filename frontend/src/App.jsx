@@ -13,8 +13,10 @@ import './App.css';
 
 function AppContent() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const { setUserInfo } = useContext(UserContext); // Esto ya funciona porque UserProvider envuelve AppContent
+    const { userInfo, setUserInfo } = useContext(UserContext); // Esto ya funciona porque UserProvider envuelve AppContent
 
+    // console.log(userInfo)
+    
     // Función para obtener los datos del usuario
     const fetchUserData = async (token) => {
         try {
