@@ -97,9 +97,7 @@ export default function Personaje() {
             return;
         }
     
-        axios
-            .put(
-                `http://localhost:5000/api/user/${userInfo.id}/equipItem`,
+        axios.put(`http://localhost:5000/api/user/${userInfo.id}/equipItem`,
                 {
                     character: updatedCharacter,
                     inventory: updatedInventory,

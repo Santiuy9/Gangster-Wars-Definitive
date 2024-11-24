@@ -1,23 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './css/CountdownBar.css';
 
 const CountdownBar = ({ duration, isPaused, onComplete }) => {
   const [timeLeft, setTimeLeft] = useState(duration);
+  const timeLeftRef = useRef(timeLeft);
 
   useEffect(() => {
-    //console.log(`Countdown started: ${timeLeft} seconds left`);
-
+    // Solo ejecutar el intervalo si el contador no está pausado y tiene tiempo restante
     if (isPaused || timeLeft <= 0) return;
 
     const interval = setInterval(() => {
       setTimeLeft((prevTime) => {
-        if (prevTime <= 1) {
+        const newTime = prevTime - 1;
+        timeLeftRef.current = newTime;
+        if (newTime <= 0) {
           console.log('Countdown finished');
           onComplete && onComplete(); 
           clearInterval(interval);
-          return duration;
+          return duration; // Reiniciar el contador
         }
-        return prevTime - 1;
+        return newTime;
       });
     }, 1000);
 

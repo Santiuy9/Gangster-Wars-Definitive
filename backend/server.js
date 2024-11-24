@@ -5,6 +5,7 @@ const cors = require('cors');
 const User = require('./models/User'); // Modelo de usuario
 const authRoutes = require('./routes/auth')
 const userRoutes = require('./routes/user')
+const missionRoutes = require('./routes/missions')
 require('dotenv').config();
 
 const app = express();
@@ -24,6 +25,7 @@ mongoose.connect(process.env.MONGO_URI, {
 
 app.use('/api', authRoutes);
 app.use('/api', userRoutes);
+app.use('/api', missionRoutes)
 
 // Iniciar el servidor
 const PORT = process.env.PORT || 5000;

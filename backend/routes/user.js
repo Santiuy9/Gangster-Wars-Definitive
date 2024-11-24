@@ -40,6 +40,7 @@ router.get('/user', authenticateToken, async (req, res) => {
             stats: user.stats,
             character: user.character,
             inventory: user.inventory,
+            missionStatus: user.missionStatus,
         };
     
         res.json(userData);

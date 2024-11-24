@@ -1,29 +1,147 @@
-.MissionCard {
-    display: flex;
-    width: 95vw;
-    min-width: 605px;
-    max-width: 700px;
-    height: auto;
-    margin: 10px;
-    background-color: #383838bb;
-    border-radius: 15px;
+/* Contenedor principal de la tarjeta de misión */
+.mission-card {
+  width: 300px;
+  padding: 20px;
+  margin: 10px;
+  border-radius: 10px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.3s ease;
 }
 
-.MissionDescription {
-    display: flex;
-    flex-direction: column;
-    margin: 0px 10px;
-    padding: 5px;
+.mission-card:hover {
+  transform: translateY(-5px);
 }
 
-.MissionCard img {
-    width: 350px;
-    height: 270px;
-    border-radius: 15px 0 0 15px;
+.mission-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #333;
 }
 
-.MissionRewardsDetails {
-    display: flex;
-    justify-content: space-between;
+.mission-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 15px;
 }
 
+.mission-card p {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Estilo para los botones */
+.mission-card button {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.3s ease;
+}
+
+/* Estilo del botón de iniciar misión */
+.mission-card button:first-child {
+  background-color: #007bff;
+  color: white;
+}
+
+.mission-card button:first-child:hover {
+  background-color: #0056b3;
+}
+
+/* Estilo del botón de completar misión */
+.mission-card button:last-child {
+  background-color: #28a745;
+  color: white;
+}
+
+.mission-card button:last-child:hover {
+  background-color: #218838;
+}
+
+/* Botón deshabilitado (cuando ya hay una misión activa) */
+.mission-card button:disabled {
+  background-color: #d6d6d6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Adaptación para pantallas pequeñas (móviles) */
+@media (max-width: 600px) {
+  .mission-card {
+    width: 100%;
+    padding: 15px;
+  }
+
+  .mission-card h3 {
+    font-size: 1.3rem;
+  }
+
+  .mission-card p {
+    font-size: 0.9rem;
+  }
+
+  .mission-card img {
+    height: 150px;
+  }
+
+  .mission-card button {
+    font-size: 1rem;
+  }
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  .progress {
+    height: 100%;
+    background-color: #4caf50;
+    transition: width 1s linear;
+  }
+  .feedback {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+  }
+  .feedback.success {
+    border-color: green;
+  }
+  .feedback.failure {
+    border-color: red;
+  }
+  .feedback.success {
+    animation: fadeIn 1s ease-in-out;
+  }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+      

@@ -19,8 +19,8 @@ export default function Header() {
         <header className="game-header">
             {userInfo ? (
                 <>
-                    <HoverBar name={`Vida ${userInfo.vida}`} hoverText={`0s`} percentage={100} color="#4caf50" />
-                    <HoverBar name={`Energía ${userInfo.energia}`} hoverText={`0s`} percentage={100} color="#3300ff" />
+                    <HoverBar name={`Vida ${userInfo.vida}`} hoverText={`0s`} percentage={userInfo.vida} color="#4caf50" />
+                    <HoverBar name={`Energía ${userInfo.energia}`} hoverText={`0s`} percentage={userInfo.energia} color="#3300ff" />
 
                     <div className="player-stat">
                         <span className="stat-label">Dinero:</span>

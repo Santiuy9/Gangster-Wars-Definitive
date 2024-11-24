@@ -42,20 +42,28 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     vida: { type: Number, default: 100 },
     energia: { type: Number, default: 100 },
-    dinero: { type: Number, default: 10000000 },
+    dinero: { type: Number, default: 10000 },
     monedaPremium: { type: Number, default: 0 },
+    experience: { type: Number, default: 0 },
     stats: {  // Subobjeto para las estadísticas
-        ataque: { type: Number, default: 0 },
-        defensa: { type: Number, default: 0 },
-        velocidad: { type: Number, default: 0 },
+      ataque: { type: Number, default: 0 },
+      defensa: { type: Number, default: 0 },
+      velocidad: { type: Number, default: 0 },
     },
     character: {
-        Armamento: { type: itemSchema, default: null },
-        Equipamiento: { type: itemSchema, default: null },
-        Vehículo: { type: itemSchema, default: null },
+      Armamento: { type: itemSchema, default: null },
+      Equipamiento: { type: itemSchema, default: null },
+      Vehículo: { type: itemSchema, default: null },
     },
     inventory: [itemSchema],
-}, { timestamps: true });
+    missionStatus: {  // Estado de la misión
+      isActive: { type: Boolean, default: false },
+      missionId: { type: String, default: null },
+      startTime: { type: Date, default: null }, // Hora de inicio
+      duration: { type: Number, default: null }, // Duración en segundos
+      endTime: { type: Date, default: null },   // Hora de finalización (opcional)
+    },
+  }, { timestamps: true });
 
 // Creamos el modelo de User
 const User = mongoose.model('User', userSchema);
